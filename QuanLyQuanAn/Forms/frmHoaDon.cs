@@ -1,4 +1,6 @@
-﻿using QuanLyQuanAn.Data;
+﻿using ClosedXML.Excel;
+using Microsoft.EntityFrameworkCore;
+using QuanLyQuanAn.Data;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -8,7 +10,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using Microsoft.EntityFrameworkCore;
 
 namespace QuanLyQuanAn.Forms
 {
@@ -16,6 +17,7 @@ namespace QuanLyQuanAn.Forms
     {
         QLQADbcontext context = new QLQADbcontext();
         int id;
+
         public frmHoaDon()
         {
             InitializeComponent();
@@ -25,31 +27,28 @@ namespace QuanLyQuanAn.Forms
         {
             dataGridView.AutoGenerateColumns = false;
 
-            // BƯỚC 1: Dùng .Include để yêu cầu SQL lôi luôn dữ liệu bảng liên quan lên RAM
+            // --- CHÌA KHÓA FIX LỖI XÓA ---
+            // Xóa bộ nhớ đệm (Cache) để nó lấy dữ liệu mới nhất từ Database, không bị nhớ dai
+            context.ChangeTracker.Clear();
+
+            // Dùng .Include để yêu cầu SQL lôi luôn dữ liệu bảng liên quan lên RAM
             var dsHoaDon = context.HoaDon
-                .Include(r => r.NhanVien)      // Lôi cả bảng Nhân viên
-                .Include(r => r.KhachHang)     // Lôi cả bảng Khách hàng
-                .Include(r => r.HoaDon_ChiTiet) // Lôi cả bảng Chi tiết để tính tổng tiền
+                .Include(r => r.NhanVien)
+                .Include(r => r.KhachHang)
+                .Include(r => r.HoaDon_ChiTiet)
                 .ToList();
 
-            // BƯỚC 2: Đổ dữ liệu vào danh sách hiển thị
+            // Đổ dữ liệu vào danh sách hiển thị
             List<DanhSachHoaDon> hd = dsHoaDon.Select(r => new DanhSachHoaDon
             {
                 ID = r.ID,
                 NhanVienID = r.NhanVienID,
-                // Bây giờ r.NhanVien đã có dữ liệu nên sẽ hiện được tên
                 HoVaTenNhanVien = r.NhanVien?.HoVaTen ?? "Chưa xác định",
-
                 KhachHangID = r.KhachHangID,
-                // Bây giờ r.KhachHang đã có dữ liệu nên sẽ hiện được tên
                 HoVaTenKhachHang = r.KhachHang?.HoVaTen ?? "Khách vãng lai",
-
                 NgayLap = r.NgayLap,
                 GhiChuHoaDon = r.GhiChuHoaDon,
-
-                // Tính tổng tiền từ danh sách chi tiết đã được Include ở trên
                 TongTienHoaDon = r.HoaDon_ChiTiet.Sum(ct => (double?)((int)ct.SoLuongBan * ct.DonGiaBan)) ?? 0,
-
                 XemChiTiet = "Xem chi tiết"
             }).ToList();
 
@@ -62,13 +61,7 @@ namespace QuanLyQuanAn.Forms
             {
                 chiTiet.ShowDialog();
             }
-            // Gọi lại Load để làm mới lưới sau khi lập hóa đơn
             frmHoaDon_Load(sender, e);
-        }
-
-        private void btnXuatHoaDon_Click(object sender, EventArgs e)
-        {
-
         }
 
         private void btnSua_Click(object sender, EventArgs e)
@@ -80,30 +73,44 @@ namespace QuanLyQuanAn.Forms
             {
                 chiTiet.ShowDialog();
             }
-            // Gọi lại Load để làm mới lưới sau khi sửa hóa đơn
             frmHoaDon_Load(sender, e);
         }
 
+        // --- HÀM XÓA ĐÃ ĐƯỢC LÀM LẠI ĐỂ TRÁNH LỖI CONCURRENCY ---
         private void btnXoa_Click(object sender, EventArgs e)
         {
             if (dataGridView.CurrentRow == null) return;
 
             if (MessageBox.Show("Bạn có chắc chắn muốn xóa hóa đơn này?", "Xác nhận", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
             {
-                id = Convert.ToInt32(dataGridView.CurrentRow.Cells["ID"].Value.ToString());
-                var hd = context.HoaDon.Find(id);
-                if (hd != null)
+                try
                 {
-                    // Xóa chi tiết hóa đơn trước (để không bị lỗi khóa ngoại)
-                    var chiTiets = context.HoaDon_ChiTiet.Where(ct => ct.HoaDonID == id);
-                    context.HoaDon_ChiTiet.RemoveRange(chiTiets);
+                    id = Convert.ToInt32(dataGridView.CurrentRow.Cells["ID"].Value.ToString());
 
-                    // Xóa hóa đơn chính
-                    context.HoaDon.Remove(hd);
-                    context.SaveChanges();
+                    // Dùng một Context MỚI TINH để thực hiện lệnh xóa
+                    using (var dbDelete = new QLQADbcontext())
+                    {
+                        var hd = dbDelete.HoaDon.Find(id);
+                        if (hd != null)
+                        {
+                            // Xóa các chi tiết món ăn trước
+                            var chiTiets = dbDelete.HoaDon_ChiTiet.Where(ct => ct.HoaDonID == id);
+                            dbDelete.HoaDon_ChiTiet.RemoveRange(chiTiets);
 
-                    // Tải lại lưới
+                            // Xóa hóa đơn chính sau
+                            dbDelete.HoaDon.Remove(hd);
+                            dbDelete.SaveChanges();
+                        }
+                    }
+
+                    MessageBox.Show("Đã xóa hóa đơn thành công!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                    // Gọi lại hàm Load để làm mới lưới
                     frmHoaDon_Load(sender, e);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Lỗi khi xóa: " + ex.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }
@@ -119,14 +126,12 @@ namespace QuanLyQuanAn.Forms
 
         private void btnTimKiem_Click(object sender, EventArgs e)
         {
-            // Gọi hàm mở hộp thoại Pop-up để người dùng nhập từ khóa
             string tuKhoa = NhapTuKhoaPopUp("Nhập tên Khách hàng hoặc Nhân viên cần tìm:", "Tìm kiếm Hóa Đơn");
 
             if (!string.IsNullOrWhiteSpace(tuKhoa))
             {
-                tuKhoa = tuKhoa.ToLower(); // Chuyển thành chữ thường để dễ tìm
+                tuKhoa = tuKhoa.ToLower();
 
-                // Lọc dữ liệu bằng LINQ
                 var hd = context.HoaDon
                     .Where(r => r.KhachHang.HoVaTen.ToLower().Contains(tuKhoa) || r.NhanVien.HoVaTen.ToLower().Contains(tuKhoa))
                     .Select(r => new DanhSachHoaDon
@@ -147,17 +152,15 @@ namespace QuanLyQuanAn.Forms
                 if (hd.Count == 0)
                 {
                     MessageBox.Show("Không tìm thấy hóa đơn nào khớp với từ khóa!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    frmHoaDon_Load(sender, e); // Không thấy thì load lại toàn bộ
+                    frmHoaDon_Load(sender, e);
                 }
             }
             else
             {
-                // Nếu bấm Hủy hoặc không nhập gì thì load lại toàn bộ danh sách
                 frmHoaDon_Load(sender, e);
             }
         }
 
-        // Hàm phụ trợ: Tự động tạo một Form Pop-up nhỏ để nhập từ khóa (Tránh phải tạo Form mới thủ công)
         private string NhapTuKhoaPopUp(string loiNhan, string tieuDe)
         {
             Form prompt = new Form()
@@ -173,9 +176,7 @@ namespace QuanLyQuanAn.Forms
             TextBox txtInput = new TextBox() { Left = 20, Top = 50, Width = 340 };
             Button btnXacNhan = new Button() { Text = "Tìm kiếm", Left = 260, Width = 100, Top = 80, DialogResult = DialogResult.OK };
 
-            prompt.Controls.Add(lblText);
-            prompt.Controls.Add(txtInput);
-            prompt.Controls.Add(btnXacNhan);
+            prompt.Controls.Add(lblText); prompt.Controls.Add(txtInput); prompt.Controls.Add(btnXacNhan);
             prompt.AcceptButton = btnXacNhan;
 
             return prompt.ShowDialog() == DialogResult.OK ? txtInput.Text : "";
@@ -186,6 +187,70 @@ namespace QuanLyQuanAn.Forms
             if (dataGridView.Columns[e.ColumnIndex].Name == "XemChiTiet" && e.RowIndex >= 0)
             {
                 btnSua_Click(sender, e);
+            }
+        }
+
+        // --- NÚT XUẤT EXCEL ---
+        private void btnXuat_Click(object sender, EventArgs e)
+        {
+            if (dataGridView.Rows.Count == 0)
+            {
+                MessageBox.Show("Không có dữ liệu để xuất!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            SaveFileDialog saveFileDialog = new SaveFileDialog();
+            saveFileDialog.Title = "Xuất danh sách hóa đơn ra Excel";
+            saveFileDialog.Filter = "Excel Files|*.xlsx";
+            saveFileDialog.FileName = "DanhSachHoaDon_" + DateTime.Now.ToString("yyyyMMdd") + ".xlsx";
+
+            if (saveFileDialog.ShowDialog() == DialogResult.OK)
+            {
+                try
+                {
+                    DataTable table = new DataTable();
+                    table.Columns.AddRange(new DataColumn[] {
+                        new DataColumn("Mã HĐ", typeof(int)),
+                        new DataColumn("Nhân Viên", typeof(string)),
+                        new DataColumn("Khách Hàng", typeof(string)),
+                        new DataColumn("Ngày Lập", typeof(string)),
+                        new DataColumn("Ghi Chú", typeof(string)),
+                        new DataColumn("Tổng Tiền", typeof(double))
+                    });
+
+                    // Lấy dữ liệu MỚI NHẤT từ database để xuất
+                    using (var dbExport = new QLQADbcontext())
+                    {
+                        var dsHoaDon = dbExport.HoaDon
+                            .Include(r => r.NhanVien)
+                            .Include(r => r.KhachHang)
+                            .Include(r => r.HoaDon_ChiTiet)
+                            .ToList();
+
+                        foreach (var hd in dsHoaDon)
+                        {
+                            string tenNV = hd.NhanVien?.HoVaTen ?? "Chưa xác định";
+                            string tenKH = hd.KhachHang?.HoVaTen ?? "Khách vãng lai";
+                            string ngayLap = hd.NgayLap.ToString("dd/MM/yyyy HH:mm") ?? "";
+                            double tongTien = hd.HoaDon_ChiTiet.Sum(ct => (double?)((int)ct.SoLuongBan * ct.DonGiaBan)) ?? 0;
+
+                            table.Rows.Add(hd.ID, tenNV, tenKH, ngayLap, hd.GhiChuHoaDon, tongTien);
+                        }
+                    }
+
+                    using (XLWorkbook wb = new XLWorkbook())
+                    {
+                        var sheet = wb.Worksheets.Add(table, "DanhSachHoaDon");
+                        sheet.Column(6).Style.NumberFormat.Format = "#,##0";
+                        sheet.Columns().AdjustToContents();
+                        wb.SaveAs(saveFileDialog.FileName);
+                        MessageBox.Show("Xuất danh sách hóa đơn thành công!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Lỗi khi xuất Excel: " + ex.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
         }
     }

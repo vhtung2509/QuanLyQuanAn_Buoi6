@@ -1,7 +1,10 @@
-﻿using QuanLyQuanAn.Data;
+﻿using ClosedXML.Excel;
+using Microsoft.EntityFrameworkCore;
+using QuanLyQuanAn.Data;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Data;
 using System.Drawing;
 using System.Linq;
@@ -9,8 +12,6 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using static QuanLyQuanAn.Data.MonAn;
-using Microsoft.EntityFrameworkCore;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace QuanLyQuanAn.Forms
 {
@@ -399,6 +400,127 @@ namespace QuanLyQuanAn.Forms
                     else e.Value = null;
                 }
                 catch { e.Value = null; }
+            }
+        }
+
+        private void btnNhap_Click(object sender, EventArgs e)
+        {
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+            openFileDialog.Title = "Nhập dữ liệu từ tập tin Excel";
+            openFileDialog.Filter = "Tập tin Excel|*.xls;*.xlsx";
+            openFileDialog.Multiselect = false;
+
+            if (openFileDialog.ShowDialog() == DialogResult.OK)
+            {
+                try
+                {
+                    DataTable table = new DataTable();
+                    using (XLWorkbook workbook = new XLWorkbook(openFileDialog.FileName))
+                    {
+                        IXLWorksheet worksheet = workbook.Worksheet(1);
+                        bool firstRow = true;
+                        string readRange = "1:1";
+
+                        foreach (IXLRow row in worksheet.RowsUsed())
+                        {
+                            if (firstRow)
+                            {
+                                readRange = string.Format("{0}:{1}", 1, row.LastCellUsed().Address.ColumnNumber);
+                                foreach (IXLCell cell in row.Cells(readRange))
+                                    table.Columns.Add(cell.Value.ToString().Trim());
+                                firstRow = false;
+                            }
+                            else
+                            {
+                                table.Rows.Add();
+                                int cellIndex = 0;
+                                foreach (IXLCell cell in row.Cells(readRange))
+                                {
+                                    table.Rows[table.Rows.Count - 1][cellIndex] = cell.Value.ToString();
+                                    cellIndex++;
+                                }
+                            }
+                        }
+
+                        if (table.Rows.Count > 0)
+                        {
+                            foreach (DataRow r in table.Rows)
+                            {
+                                MonAn ma = new MonAn();
+
+                                // Dùng int.TryParse để tránh lỗi sập chương trình nếu Excel để trống ô số
+                                int loaiId = 1, soLuong = 0, donGia = 0;
+
+                                if (table.Columns.Contains("LoaiMonAnID")) int.TryParse(r["LoaiMonAnID"].ToString(), out loaiId);
+                                if (table.Columns.Contains("SoLuong")) int.TryParse(r["SoLuong"].ToString(), out soLuong);
+                                if (table.Columns.Contains("DonGia")) int.TryParse(r["DonGia"].ToString(), out donGia);
+
+                                ma.LoaiMonAnID = loaiId;
+                                ma.TenMon = table.Columns.Contains("TenMon") ? r["TenMon"].ToString() : "";
+                                ma.SoLuong = soLuong;
+                                ma.DonGia = donGia;
+                                ma.MoTa = table.Columns.Contains("MoTa") ? r["MoTa"].ToString() : "";
+                                ma.HinhAnh = table.Columns.Contains("HinhAnh") ? r["HinhAnh"].ToString() : "";
+
+                                context.MonAn.Add(ma);
+                            }
+                            context.SaveChanges();
+
+                            MessageBox.Show("Đã nhập thành công " + table.Rows.Count + " món ăn.", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            frmMonAn_Load(sender, e);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Lỗi nhập Excel: " + ex.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                }
+            }
+        }
+        private void btnXuat_Click(object sender, EventArgs e)
+        {
+            SaveFileDialog saveFileDialog = new SaveFileDialog();
+            saveFileDialog.Title = "Xuất danh sách món ăn ra Excel";
+            saveFileDialog.Filter = "Excel Files|*.xlsx";
+            saveFileDialog.FileName = "DanhSachMonAn_" + DateTime.Now.ToString("yyyyMMdd") + ".xlsx";
+
+            if (saveFileDialog.ShowDialog() == DialogResult.OK)
+            {
+                try
+                {
+                    // Tạo DataTable để chứa dữ liệu xuất
+                    DataTable table = new DataTable();
+                    table.Columns.AddRange(new DataColumn[] {
+                        new DataColumn("ID", typeof(int)),
+                        new DataColumn("LoaiMonAnID", typeof(int)),
+                        new DataColumn("TenMon", typeof(string)),
+                        new DataColumn("SoLuong", typeof(int)),
+                        new DataColumn("DonGia", typeof(int)),
+                        new DataColumn("MoTa", typeof(string)),
+                        new DataColumn("HinhAnh", typeof(string))
+                    });
+
+                    // Lấy dữ liệu từ database
+                    var danhSach = context.MonAn.ToList();
+                    foreach (var ma in danhSach)
+                    {
+                        table.Rows.Add(ma.ID, ma.LoaiMonAnID, ma.TenMon, ma.SoLuong, ma.DonGia, ma.MoTa, ma.HinhAnh);
+                    }
+
+                    // Sử dụng ClosedXML để ghi file
+                    using (XLWorkbook wb = new XLWorkbook())
+                    {
+                        var sheet = wb.Worksheets.Add(table, "MonAn");
+                        sheet.Columns().AdjustToContents(); // Tự động căn chỉnh độ rộng cột
+                        wb.SaveAs(saveFileDialog.FileName);
+
+                        MessageBox.Show("Xuất dữ liệu thành công!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Lỗi khi xuất Excel: " + ex.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
         }
     }

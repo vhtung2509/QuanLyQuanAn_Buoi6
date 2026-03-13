@@ -45,7 +45,6 @@
             ThanhTien = new DataGridViewTextBoxColumn();
             btnXoa = new Button();
             btnXacNhanBan = new Button();
-            numSoLuongBan = new NumericUpDown();
             numDonGiaBan = new NumericUpDown();
             label6 = new Label();
             label5 = new Label();
@@ -54,12 +53,13 @@
             btnLuuHoaDon = new Button();
             btnInHoaDon = new Button();
             btnThoat = new Button();
+            numSoLuongBan = new NumericUpDown();
             groupBox1.SuspendLayout();
             groupBox2.SuspendLayout();
             groupBox3.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dataGridView).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)numSoLuongBan).BeginInit();
             ((System.ComponentModel.ISupportInitialize)numDonGiaBan).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)numSoLuongBan).BeginInit();
             SuspendLayout();
             // 
             // groupBox1
@@ -129,10 +129,10 @@
             // 
             // groupBox2
             // 
+            groupBox2.Controls.Add(numSoLuongBan);
             groupBox2.Controls.Add(groupBox3);
             groupBox2.Controls.Add(btnXoa);
             groupBox2.Controls.Add(btnXacNhanBan);
-            groupBox2.Controls.Add(numSoLuongBan);
             groupBox2.Controls.Add(numDonGiaBan);
             groupBox2.Controls.Add(label6);
             groupBox2.Controls.Add(label5);
@@ -225,14 +225,6 @@
             btnXacNhanBan.UseVisualStyleBackColor = true;
             btnXacNhanBan.Click += btnXacNhanBan_Click;
             // 
-            // numSoLuongBan
-            // 
-            numSoLuongBan.Location = new Point(684, 46);
-            numSoLuongBan.Maximum = new decimal(new int[] { 1000, 0, 0, 0 });
-            numSoLuongBan.Name = "numSoLuongBan";
-            numSoLuongBan.Size = new Size(150, 27);
-            numSoLuongBan.TabIndex = 6;
-            // 
             // numDonGiaBan
             // 
             numDonGiaBan.Location = new Point(386, 47);
@@ -306,6 +298,14 @@
             btnThoat.UseVisualStyleBackColor = true;
             btnThoat.Click += btnThoat_Click;
             // 
+            // numSoLuongBan
+            // 
+            numSoLuongBan.Location = new Point(684, 49);
+            numSoLuongBan.Maximum = new decimal(new int[] { 1000, 0, 0, 0 });
+            numSoLuongBan.Name = "numSoLuongBan";
+            numSoLuongBan.Size = new Size(150, 27);
+            numSoLuongBan.TabIndex = 10;
+            // 
             // frmHoaDon_ChiTiet
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
@@ -325,8 +325,8 @@
             groupBox2.PerformLayout();
             groupBox3.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)dataGridView).EndInit();
-            ((System.ComponentModel.ISupportInitialize)numSoLuongBan).EndInit();
             ((System.ComponentModel.ISupportInitialize)numDonGiaBan).EndInit();
+            ((System.ComponentModel.ISupportInitialize)numSoLuongBan).EndInit();
             ResumeLayout(false);
         }
 
@@ -345,7 +345,6 @@
         private Label label5;
         private ComboBox cboMonAn;
         private Label label4;
-        private NumericUpDown numSoLuongBan;
         private Button btnXoa;
         private Button btnXacNhanBan;
         private GroupBox groupBox3;
@@ -358,5 +357,6 @@
         private DataGridViewTextBoxColumn DonGiaBan;
         private DataGridViewTextBoxColumn SoLuongBan;
         private DataGridViewTextBoxColumn ThanhTien;
+        private NumericUpDown numSoLuongBan;
     }
 }

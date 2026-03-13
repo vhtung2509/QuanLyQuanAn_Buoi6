@@ -134,7 +134,7 @@
             btnXuatHoaDon.TabIndex = 2;
             btnXuatHoaDon.Text = "In hóa đơn";
             btnXuatHoaDon.UseVisualStyleBackColor = true;
-            btnXuatHoaDon.Click += btnXuatHoaDon_Click;
+            btnXuatHoaDon.Click += btnXuat_Click;
             // 
             // btnSua
             // 
@@ -184,6 +184,7 @@
             btnXuat.TabIndex = 7;
             btnXuat.Text = "Xuất Excel";
             btnXuat.UseVisualStyleBackColor = true;
+            btnXuat.Click += btnXuat_Click;
             // 
             // frmHoaDon
             // 

@@ -29,6 +29,8 @@
         private void InitializeComponent()
         {
             groupBox1 = new GroupBox();
+            btnXuat = new Button();
+            btnNhap = new Button();
             btnThoat = new Button();
             btnLuu = new Button();
             btnHuyBo = new Button();
@@ -48,6 +50,8 @@
             // 
             // groupBox1
             // 
+            groupBox1.Controls.Add(btnXuat);
+            groupBox1.Controls.Add(btnNhap);
             groupBox1.Controls.Add(btnThoat);
             groupBox1.Controls.Add(btnLuu);
             groupBox1.Controls.Add(btnHuyBo);
@@ -58,10 +62,30 @@
             groupBox1.Controls.Add(label1);
             groupBox1.Location = new Point(12, 12);
             groupBox1.Name = "groupBox1";
-            groupBox1.Size = new Size(870, 146);
+            groupBox1.Size = new Size(1138, 146);
             groupBox1.TabIndex = 0;
             groupBox1.TabStop = false;
             groupBox1.Text = "Thông tin loại món ăn";
+            // 
+            // btnXuat
+            // 
+            btnXuat.Location = new Point(1013, 91);
+            btnXuat.Name = "btnXuat";
+            btnXuat.Size = new Size(94, 29);
+            btnXuat.TabIndex = 9;
+            btnXuat.Text = "Xuất";
+            btnXuat.UseVisualStyleBackColor = true;
+            btnXuat.Click += btnXuat_Click;
+            // 
+            // btnNhap
+            // 
+            btnNhap.Location = new Point(894, 91);
+            btnNhap.Name = "btnNhap";
+            btnNhap.Size = new Size(94, 29);
+            btnNhap.TabIndex = 8;
+            btnNhap.Text = "Nhập";
+            btnNhap.UseVisualStyleBackColor = true;
+            btnNhap.Click += btnNhap_Click;
             // 
             // btnThoat
             // 
@@ -129,7 +153,7 @@
             // 
             txtTenLoai.Location = new Point(169, 34);
             txtTenLoai.Name = "txtTenLoai";
-            txtTenLoai.Size = new Size(695, 27);
+            txtTenLoai.Size = new Size(938, 27);
             txtTenLoai.TabIndex = 1;
             // 
             // label1
@@ -137,16 +161,16 @@
             label1.AutoSize = true;
             label1.Location = new Point(6, 37);
             label1.Name = "label1";
-            label1.Size = new Size(136, 20);
+            label1.Size = new Size(138, 20);
             label1.TabIndex = 0;
-            label1.Text = "tên loại món ăn (*):";
+            label1.Text = "Tên loại món ăn (*):";
             // 
             // groupBox2
             // 
             groupBox2.Controls.Add(dataGridView);
             groupBox2.Location = new Point(12, 174);
             groupBox2.Name = "groupBox2";
-            groupBox2.Size = new Size(870, 264);
+            groupBox2.Size = new Size(1138, 264);
             groupBox2.TabIndex = 1;
             groupBox2.TabStop = false;
             groupBox2.Text = "Danh sách loại món ăn";
@@ -164,7 +188,7 @@
             dataGridView.Name = "dataGridView";
             dataGridView.RowHeadersVisible = false;
             dataGridView.RowHeadersWidth = 51;
-            dataGridView.Size = new Size(864, 238);
+            dataGridView.Size = new Size(1132, 238);
             dataGridView.TabIndex = 0;
             // 
             // ID
@@ -186,7 +210,7 @@
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(894, 450);
+            ClientSize = new Size(1162, 450);
             Controls.Add(groupBox2);
             Controls.Add(groupBox1);
             Name = "frmLoaiMonAn";
@@ -214,5 +238,7 @@
         private DataGridView dataGridView;
         private DataGridViewTextBoxColumn ID;
         private DataGridViewTextBoxColumn TenLoai;
+        private Button btnXuat;
+        private Button btnNhap;
     }
 }

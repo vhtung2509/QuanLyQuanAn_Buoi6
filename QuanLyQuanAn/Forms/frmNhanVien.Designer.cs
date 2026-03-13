@@ -101,6 +101,7 @@
             btnNhap.TabIndex = 24;
             btnNhap.Text = "Nhập";
             btnNhap.UseVisualStyleBackColor = true;
+            btnNhap.Click += btnNhap_Click;
             // 
             // btnXuat
             // 
@@ -110,6 +111,7 @@
             btnXuat.TabIndex = 23;
             btnXuat.Text = "Xuất";
             btnXuat.UseVisualStyleBackColor = true;
+            btnXuat.Click += btnXuat_Click;
             // 
             // btnTimKiem
             // 
@@ -310,7 +312,6 @@
             // ID
             // 
             ID.DataPropertyName = "ID";
-            ID.FillWeight = 32.08556F;
             ID.HeaderText = "ID";
             ID.MinimumWidth = 6;
             ID.Name = "ID";
@@ -318,7 +319,6 @@
             // HoVaTen
             // 
             HoVaTen.DataPropertyName = "HoVaTen";
-            HoVaTen.FillWeight = 113.582886F;
             HoVaTen.HeaderText = "Họ và tên";
             HoVaTen.MinimumWidth = 6;
             HoVaTen.Name = "HoVaTen";
@@ -326,7 +326,6 @@
             // DienThoai
             // 
             DienThoai.DataPropertyName = "DienThoai";
-            DienThoai.FillWeight = 113.582886F;
             DienThoai.HeaderText = "Điện thoại";
             DienThoai.MinimumWidth = 6;
             DienThoai.Name = "DienThoai";
@@ -334,7 +333,6 @@
             // DiaChi
             // 
             DiaChi.DataPropertyName = "DiaChi";
-            DiaChi.FillWeight = 113.582886F;
             DiaChi.HeaderText = "Địa chỉ";
             DiaChi.MinimumWidth = 6;
             DiaChi.Name = "DiaChi";
@@ -342,7 +340,6 @@
             // TenDangNhap
             // 
             TenDangNhap.DataPropertyName = "TenDangNhap";
-            TenDangNhap.FillWeight = 113.582886F;
             TenDangNhap.HeaderText = "Tên đăng nhập";
             TenDangNhap.MinimumWidth = 6;
             TenDangNhap.Name = "TenDangNhap";
@@ -350,7 +347,6 @@
             // QuyenHan
             // 
             QuyenHan.DataPropertyName = "QuyenHan";
-            QuyenHan.FillWeight = 113.582886F;
             QuyenHan.HeaderText = "Quyền hạn";
             QuyenHan.MinimumWidth = 6;
             QuyenHan.Name = "QuyenHan";
